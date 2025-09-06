@@ -15,13 +15,6 @@ mcp = FastMCP(
     instructions="You are a virtual accountant connected to the YNAB API.",
 )
 
-# TODOs
-# TODO: Error handling
-
-# Issues
-# - Transactions fails
-# - Categories for month fails
-
 # Register all tools
 register_user_tools(mcp)
 register_budget_tools(mcp)

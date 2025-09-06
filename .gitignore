@@ -1,3 +1,4 @@
 clean
 open_api_spec.yaml
 .env
+**/__pycache__/
