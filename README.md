@@ -1,5 +1,20 @@
 # YNAB MCP
 
+## Contents
+
+- [About](#about)
+- [Screenshots](#screenshots)
+- [Supported Operations](#supported-operations)
+- [Installation Instructions](#installation-instructions)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+    - [1. Configure YNAB API Token](#1-configure-ynab-api-token)
+    - [2. Clone the Repository](#2-clone-the-repository)
+    - [3. Build](#3-build)
+  - [Claude Setup](#claude-setup)
+    - [1. Open the MCP config](#1-open-the-mcp-config)
+    - [2. Add entry for YNAB](#2-add-entry-for-ynab)
+
 ## About 
 
 YNAB MCP is a Model Context Protocol (MCP) server that provides AI assistants access to the YNAB API. 
