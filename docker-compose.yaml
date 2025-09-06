@@ -1,7 +1,8 @@
 services:
-  ynab-mcp:
-    container_name: ynab-mcp
-    build: .
+  mcp:
+    container_name: ynab
+    build: 
+      context: .
     env_file:
       - .env
     stdin_open: true

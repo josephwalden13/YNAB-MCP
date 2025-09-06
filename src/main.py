@@ -10,6 +10,14 @@ mcp = FastMCP(
     instructions="You are a virtual accountant connected to the YNAB API.",
 )
 
+# TODOs
+# TODO: Error handling
+
+
+# Issues
+# - Transactions fails
+# - Categories for month fails
+
 # Constants
 YNAB_API_BASE = "https://api.ynab.com/v1"
 YNAB_API_TOKEN = os.environ["YNAB_API_TOKEN"]
@@ -17,7 +25,7 @@ YNAB_API_TOKEN = os.environ["YNAB_API_TOKEN"]
 assert YNAB_API_TOKEN, "Missing YNAB_API_TOKEN environment variable"
 
 
-async def ynab_request(url: str) -> dict[str, Any] | None:
+async def ynab_get(url: str) -> dict[str, Any] | None:
     """Fetch all budgets from YNAB API."""
     headers = {
         "Authorization": f"Bearer {YNAB_API_TOKEN}",
@@ -35,23 +43,69 @@ async def ynab_request(url: str) -> dict[str, Any] | None:
             return None
 
 
+async def ynab_post(url: str, data: dict[str, Any]) -> dict[str, Any] | None:
+    """Create a resource in YNAB API."""
+    headers = {
+        "Authorization": f"Bearer {YNAB_API_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                f"{YNAB_API_BASE}/{url}", headers=headers, json=data
+            )
+            response.raise_for_status()
+            response_json = response.json()
+            if not "data" in response_json:
+                raise ValueError(f"Invalid response: {response_json}")
+            return response_json["data"]
+        except Exception as e:
+            return {"error": str(e), "data": data}
+
+
+async def ynab_put(url: str, data: dict[str, Any]) -> dict[str, Any] | None:
+    """Update a resource in YNAB API."""
+    headers = {
+        "Authorization": f"Bearer {YNAB_API_TOKEN}",
+        "Content-Type": "application/json",
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.put(
+                f"{YNAB_API_BASE}/{url}", headers=headers, json=data
+            )
+            response.raise_for_status()
+            response_json = response.json()
+            if not "data" in response_json:
+                raise ValueError(f"Invalid response: {response_json}")
+            return response_json["data"]
+        except Exception as e:
+            return {"error": str(e), "data": data}
+
+
+async def ynab_delete(url: str) -> dict[str, Any] | None:
+    """Delete a resource in YNAB API."""
+    headers = {
+        "Authorization": f"Bearer {YNAB_API_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.delete(f"{YNAB_API_BASE}/{url}", headers=headers)
+            response.raise_for_status()
+            response_json = response.json()
+            return response_json
+        except Exception as e:
+            return None
+
+
 def format_user(user):
     return json.dumps(
         {
             "id": user["id"],
         }
     )
-
-
-@mcp.tool()
-async def get_user() -> str:
-    """Fetch user information from YNAB API."""
-    response = await ynab_request("user")
-    if not response:
-        return "Unable to fetch user information."
-    assert "user" in response, "No user found in response"
-    user = response["user"]
-    return format_user(user)
 
 
 def format_budgets(budgets):
@@ -66,17 +120,6 @@ def format_budgets(budgets):
             for budget in budgets
         ]
     )
-
-
-@mcp.tool()
-async def get_budgets() -> str:
-    """Fetch budgets from YNAB API."""
-    response = await ynab_request("budgets")
-    if not response:
-        return "Unable to fetch budgets."
-    assert "budgets" in response, "No budgets found in response"
-    budgets = response["budgets"]
-    return format_budgets(budgets)
 
 
 def format_monthly_balances(monthly_balances):
@@ -115,17 +158,6 @@ def format_accounts(accounts):
     )
 
 
-@mcp.tool()
-async def get_accounts(budget_id: str) -> str:
-    """Fetch accounts from YNAB API."""
-    response = await ynab_request(f"budgets/{budget_id}/accounts")
-    if not response:
-        return "Unable to fetch accounts."
-    assert "accounts" in response, "No accounts found in response"
-    accounts = response["accounts"]
-    return format_accounts(accounts)
-
-
 def format_months(months):
     return json.dumps(
         [
@@ -142,28 +174,6 @@ def format_months(months):
             for month in months
         ]
     )
-
-
-@mcp.tool()
-async def get_months(budget_id: str) -> str:
-    """Fetch months from YNAB API."""
-    response = await ynab_request(f"budgets/{budget_id}/months")
-    if not response:
-        return "Unable to fetch months."
-    assert "months" in response, "No months found in response"
-    months = response["months"]
-    return format_months(months)
-
-
-@mcp.tool()
-async def get_payees(budget_id: str) -> str:
-    """Fetch payees from YNAB API."""
-    response = await ynab_request(f"budgets/{budget_id}/payees")
-    if not response:
-        return "Unable to fetch payees."
-    assert "payees" in response, "No payees found in response"
-    payees = response["payees"]
-    return str(payees)
 
 
 def format_categories(categories):
@@ -199,34 +209,6 @@ def format_categories(categories):
             for category in categories
         ]
     )
-
-
-@mcp.tool()
-async def get_categories(budget_id: str) -> str:
-    """Fetch categories from YNAB API."""
-    response = await ynab_request(f"budgets/{budget_id}/categories")
-    if not response:
-        return "Unable to fetch categories."
-    assert "category_groups" in response, "No category groups found in response"
-    category_groups = response["category_groups"]
-    categories = [
-        category for group in category_groups for category in group["categories"]
-    ]
-    return format_categories(categories)
-
-
-@mcp.tool()
-async def get_categories_for_month(budget_id: str, month: str, category_id: str) -> str:
-    """Fetch categories for a specific month from YNAB API."""
-    response = await ynab_request(f"budgets/{budget_id}/months/{month}/categories/{category_id}")
-    if not response:
-        return "Unable to fetch categories."
-    assert "category_groups" in response, "No category groups found in response"
-    category_groups = response["category_groups"]
-    categories = [
-        category for group in category_groups for category in group["categories"]
-    ]
-    return format_categories(categories)
 
 
 def format_subtransactions(subtransactions):
@@ -284,6 +266,208 @@ def format_transactions(transactions):
 
 
 @mcp.tool()
+async def get_user() -> str:
+    """Fetch user information from YNAB API."""
+    response = await ynab_get("user")
+    if not response:
+        return "Unable to fetch user information."
+    assert "user" in response, "No user found in response"
+    user = response["user"]
+    return format_user(user)
+
+
+@mcp.tool()
+async def get_budgets() -> str:
+    """Fetch budgets from YNAB API."""
+    response = await ynab_get("budgets")
+    if not response:
+        return "Unable to fetch budgets."
+    assert "budgets" in response, "No budgets found in response"
+    budgets = response["budgets"]
+    return format_budgets(budgets)
+
+
+@mcp.tool()
+async def get_accounts(budget_id: str) -> str:
+    """Fetch accounts from YNAB API."""
+    response = await ynab_get(f"budgets/{budget_id}/accounts")
+    if not response:
+        return "Unable to fetch accounts."
+    assert "accounts" in response, "No accounts found in response"
+    accounts = response["accounts"]
+    return format_accounts(accounts)
+
+
+@mcp.tool()
+async def get_months(budget_id: str) -> str:
+    """Fetch months from YNAB API."""
+    response = await ynab_get(f"budgets/{budget_id}/months")
+    if not response:
+        return "Unable to fetch months."
+    assert "months" in response, "No months found in response"
+    months = response["months"]
+    return format_months(months)
+
+
+@mcp.tool()
+async def get_payees(budget_id: str) -> str:
+    """Fetch payees from YNAB API."""
+    response = await ynab_get(f"budgets/{budget_id}/payees")
+    if not response:
+        return "Unable to fetch payees."
+    assert "payees" in response, "No payees found in response"
+    payees = response["payees"]
+    return json.dumps(payees)
+
+
+@mcp.tool()
+async def update_category(
+    budget_id: str,
+    category_id: str,
+    name: str | None = None,
+    note: str | None = None,
+    goal_target: int | None = None,
+) -> str:
+    """Update a category in YNAB API."""
+    category = {}
+    if name is not None:
+        category["name"] = name
+    if note is not None:
+        category["note"] = note
+    if goal_target is not None:
+        category["goal_target"] = goal_target
+    category_data = {"category": category}
+
+    response = await ynab_put(
+        f"budgets/{budget_id}/categories/{category_id}", category_data
+    )
+    if not response:
+        return "Unable to update category."
+    return json.dumps(response)
+
+
+@mcp.tool()
+async def update_category_for_month(
+    budget_id: str, month: str, category_id: str, budgeted: int
+) -> str:
+    """Update a category for a specific month in YNAB API."""
+    category_data = {
+        "category": {
+            "budgeted": budgeted,
+        }
+    }
+    response = await ynab_put(
+        f"budgets/{budget_id}/months/{month}/categories/{category_id}", category_data
+    )
+    if not response:
+        return "Unable to update category for month."
+    return json.dumps(response)
+
+
+@mcp.tool()
+async def get_categories(budget_id: str) -> str:
+    """Fetch categories from YNAB API."""
+    response = await ynab_get(f"budgets/{budget_id}/categories")
+    if not response:
+        return "Unable to fetch categories."
+    assert "category_groups" in response, "No category groups found in response"
+    category_groups = response["category_groups"]
+    categories = [
+        category for group in category_groups for category in group["categories"]
+    ]
+    return format_categories(categories)
+
+
+@mcp.tool()
+async def get_categories_for_month(budget_id: str, month: str, category_id: str) -> str:
+    """Fetch categories for a specific month from YNAB API."""
+    response = await ynab_get(
+        f"budgets/{budget_id}/months/{month}/categories/{category_id}"
+    )
+    if not response:
+        return "Unable to fetch categories."
+    assert "category_groups" in response, "No category groups found in response"
+    category_groups = response["category_groups"]
+    categories = [
+        category for group in category_groups for category in group["categories"]
+    ]
+    return format_categories(categories)
+
+
+@mcp.tool()
+async def new_transaction(
+    budget_id: str,
+    date: str,
+    amount: int,
+    account_id: str,
+    payee_name: str,
+    category_id: str | None = None,
+    memo: str | None = None,
+) -> str:
+    """Create a new transaction in YNAB API."""
+    transaction_data = {
+        "transaction": {
+            "account_id": account_id,
+            "date": date,
+            "amount": amount,
+            "payee_name": payee_name,
+            "category_id": category_id,
+            "memo": memo,
+            "approved": True,
+        }
+    }
+
+    response = await ynab_post(f"budgets/{budget_id}/transactions", transaction_data)
+    if not response:
+        return "Unable to create transaction."
+    return json.dumps(response)
+
+
+@mcp.tool()
+async def update_transaction(
+    budget_id: str,
+    transaction_id: str,
+    date: str | None = None,
+    amount: int | None = None,
+    account_id: str | None = None,
+    payee_name: str | None = None,
+    category_id: str | None = None,
+    memo: str | None = None,
+) -> str:
+    """Update a transaction in YNAB API."""
+    transaction = {}
+    if date is not None:
+        transaction["date"] = date
+    if amount is not None:
+        transaction["amount"] = amount
+    if account_id is not None:
+        transaction["account_id"] = account_id
+    if payee_name is not None:
+        transaction["payee_name"] = payee_name
+    if category_id is not None:
+        transaction["category_id"] = category_id
+    if memo is not None:
+        transaction["memo"] = memo
+    transaction_data = {"transaction": transaction}
+
+    response = await ynab_put(
+        f"budgets/{budget_id}/transactions/{transaction_id}", transaction_data
+    )
+    if not response:
+        return "Unable to update transaction."
+    return json.dumps(response)
+
+
+@mcp.tool()
+async def delete_transaction(budget_id: str, transaction_id: str) -> str:
+    """Delete a transaction in YNAB API."""
+    response = await ynab_delete(f"budgets/{budget_id}/transactions/{transaction_id}")
+    if not response:
+        return "Unable to delete transaction."
+    return json.dumps(response)
+
+
+@mcp.tool()
 async def get_transactions(budget_id: str, category_id: str, start_date: str) -> str:
     """Fetch transactions from YNAB API
     Args:
@@ -291,7 +475,7 @@ async def get_transactions(budget_id: str, category_id: str, start_date: str) ->
         category_id (str): The ID of the category.
         start_date (str): The start date in YYYY-MM-DD format.
     """
-    response = await ynab_request(
+    response = await ynab_get(
         f"/budgets/{budget_id}/categories/{category_id}/transactions?since={start_date}"
     )
     if not response:
@@ -304,7 +488,7 @@ async def get_transactions(budget_id: str, category_id: str, start_date: str) ->
 @mcp.tool()
 async def get_transactions_for_month(budget_id: str, month: str) -> str:
     """Fetch transactions for a specific month from YNAB API."""
-    response = await ynab_request(f"budgets/{budget_id}/months/{month}/transactions")
+    response = await ynab_get(f"budgets/{budget_id}/months/{month}/transactions")
     if not response:
         return "Unable to fetch transactions."
     assert "transactions" in response, "No transactions found in response"
@@ -317,7 +501,7 @@ async def get_transactions_for_account(
     budget_id: str, account_id: str, start_date: str
 ) -> str:
     """Fetch transactions for a specific account from YNAB API."""
-    response = await ynab_request(
+    response = await ynab_get(
         f"/budgets/{budget_id}/accounts/{account_id}/transactions?since={start_date}"
     )
     if not response:
