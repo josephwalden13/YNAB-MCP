@@ -216,9 +216,9 @@ async def get_categories(budget_id: str) -> str:
 
 
 @mcp.tool()
-async def get_categories_for_month(budget_id: str, month: str) -> str:
+async def get_categories_for_month(budget_id: str, month: str, category_id: str) -> str:
     """Fetch categories for a specific month from YNAB API."""
-    response = await ynab_request(f"budgets/{budget_id}/months/{month}/categories")
+    response = await ynab_request(f"budgets/{budget_id}/months/{month}/categories/{category_id}")
     if not response:
         return "Unable to fetch categories."
     assert "category_groups" in response, "No category groups found in response"
