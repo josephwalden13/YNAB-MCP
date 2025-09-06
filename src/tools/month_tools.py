@@ -1,6 +1,6 @@
 import json
 from mcp.server.fastmcp import FastMCP
-from .api_client import ynab_get, ynab_put
+from .api_client import format_error, ynab_get, ynab_put
 
 
 def format_months(months):
@@ -29,7 +29,8 @@ def register_month_tools(mcp: FastMCP):
         """Fetch months from YNAB API."""
         response = await ynab_get(f"budgets/{budget_id}/months")
         if not response:
-            return "Unable to fetch months."
-        assert "months" in response, "No months found in response"
+            return format_error("Unable to fetch months.")
+        if not "months" in response:
+            return format_error("No months found in response.", response=response)
         months = response["months"]
         return format_months(months)

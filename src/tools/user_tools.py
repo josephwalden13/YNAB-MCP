@@ -1,6 +1,6 @@
 import json
 from mcp.server.fastmcp import FastMCP
-from .api_client import ynab_get
+from .api_client import format_error, ynab_get
 
 
 def format_user(user):
@@ -19,7 +19,8 @@ def register_user_tools(mcp: FastMCP):
         """Fetch user information from YNAB API."""
         response = await ynab_get("user")
         if not response:
-            return "Unable to fetch user information."
-        assert "user" in response, "No user found in response"
+            return format_error("Unable to fetch user information.")
+        if not "user" in response:
+            return format_error("No user found in response.", response=response)
         user = response["user"]
         return format_user(user)

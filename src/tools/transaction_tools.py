@@ -1,6 +1,6 @@
 import json
 from mcp.server.fastmcp import FastMCP
-from .api_client import ynab_get, ynab_post, ynab_put, ynab_delete
+from tools.api_client import ynab_get, ynab_post, ynab_put, ynab_delete, format_error
 
 
 def format_subtransactions(subtransactions):
@@ -87,7 +87,7 @@ def register_transaction_tools(mcp: FastMCP):
             f"budgets/{budget_id}/transactions", transaction_data
         )
         if not response:
-            return "Unable to create transaction."
+            return format_error("Unable to create transaction.")
         return json.dumps(response)
 
     @mcp.tool()
@@ -121,7 +121,7 @@ def register_transaction_tools(mcp: FastMCP):
             f"budgets/{budget_id}/transactions/{transaction_id}", transaction_data
         )
         if not response:
-            return "Unable to update transaction."
+            return format_error("Unable to update transaction.")
         return json.dumps(response)
 
     @mcp.tool()
@@ -131,7 +131,7 @@ def register_transaction_tools(mcp: FastMCP):
             f"budgets/{budget_id}/transactions/{transaction_id}"
         )
         if not response:
-            return "Unable to delete transaction."
+            return format_error("Unable to delete transaction.")
         return json.dumps(response)
 
     @mcp.tool()
@@ -148,8 +148,9 @@ def register_transaction_tools(mcp: FastMCP):
             f"/budgets/{budget_id}/categories/{category_id}/transactions?since={start_date}"
         )
         if not response:
-            return "Unable to fetch transactions."
-        assert "transactions" in response, "No transactions found in response"
+            return format_error("Unable to fetch transactions.", response)
+        if not "transactions" in response:
+            return format_error("No transactions found in response", response)
         transactions = response["transactions"]
         return format_transactions(transactions)
 
@@ -162,8 +163,9 @@ def register_transaction_tools(mcp: FastMCP):
             f"/budgets/{budget_id}/accounts/{account_id}/transactions?since={start_date}"
         )
         if not response:
-            return "Unable to fetch transactions."
-        assert "transactions" in response, "No transactions found in response"
+            return format_error("Unable to fetch transactions.", response)
+        if not "transactions" in response:
+            return format_error("No transactions found in response", response)
         transactions = response["transactions"]
         return format_transactions(transactions)
 
@@ -172,7 +174,8 @@ def register_transaction_tools(mcp: FastMCP):
         """Fetch transactions for a specific month from YNAB API."""
         response = await ynab_get(f"budgets/{budget_id}/months/{month}/transactions")
         if not response:
-            return "Unable to fetch transactions."
-        assert "transactions" in response, "No transactions found in response"
+            return format_error("Unable to fetch transactions.", response)
+        if not "transactions" in response:
+            return format_error("No transactions found in response", response)
         transactions = response["transactions"]
         return format_transactions(transactions)

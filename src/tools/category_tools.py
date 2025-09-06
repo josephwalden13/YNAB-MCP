@@ -1,6 +1,6 @@
 import json
 from mcp.server.fastmcp import FastMCP
-from .api_client import ynab_get, ynab_put
+from .api_client import format_error, ynab_get, ynab_put
 
 
 def format_categories(categories):
@@ -46,8 +46,9 @@ def register_category_tools(mcp: FastMCP):
         """Fetch categories from YNAB API."""
         response = await ynab_get(f"budgets/{budget_id}/categories")
         if not response:
-            return "Unable to fetch categories."
-        assert "category_groups" in response, "No category groups found in response"
+            return format_error("Unable to fetch categories.")
+        if not "category_groups" in response:
+            return format_error("No category groups found in response.", response=response)
         category_groups = response["category_groups"]
         categories = [
             category for group in category_groups for category in group["categories"]
@@ -63,13 +64,11 @@ def register_category_tools(mcp: FastMCP):
             f"budgets/{budget_id}/months/{month}/categories/{category_id}"
         )
         if not response:
-            return "Unable to fetch categories."
-        assert "category_groups" in response, "No category groups found in response"
-        category_groups = response["category_groups"]
-        categories = [
-            category for group in category_groups for category in group["categories"]
-        ]
-        return format_categories(categories)
+            return format_error("Unable to fetch category.")
+        if not "category" in response:
+            return format_error("No category found in response.", response=response)
+        category = response["category"]
+        return format_categories([category])
 
     @mcp.tool()
     async def update_category(
@@ -93,7 +92,7 @@ def register_category_tools(mcp: FastMCP):
             f"budgets/{budget_id}/categories/{category_id}", category_data
         )
         if not response:
-            return "Unable to update category."
+            return format_error("Unable to update category.")
         return json.dumps(response)
 
     @mcp.tool()
@@ -111,5 +110,5 @@ def register_category_tools(mcp: FastMCP):
             category_data,
         )
         if not response:
-            return "Unable to update category for month."
+            return format_error("Unable to update category for month.")
         return json.dumps(response)

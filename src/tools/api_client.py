@@ -1,4 +1,5 @@
 import httpx
+import json
 import os
 from typing import Any
 
@@ -24,7 +25,7 @@ async def ynab_get(url: str) -> dict[str, Any] | None:
                 return None
             return response_json["data"]
         except Exception as e:
-            return None
+            return format_error_dict(str(e))
 
 
 async def ynab_post(url: str, data: dict[str, Any]) -> dict[str, Any] | None:
@@ -44,7 +45,7 @@ async def ynab_post(url: str, data: dict[str, Any]) -> dict[str, Any] | None:
                 raise ValueError(f"Invalid response: {response_json}")
             return response_json["data"]
         except Exception as e:
-            return {"error": str(e), "data": data}
+            return format_error_dict(str(e), data=data)
 
 
 async def ynab_put(url: str, data: dict[str, Any]) -> dict[str, Any] | None:
@@ -65,7 +66,7 @@ async def ynab_put(url: str, data: dict[str, Any]) -> dict[str, Any] | None:
                 raise ValueError(f"Invalid response: {response_json}")
             return response_json["data"]
         except Exception as e:
-            return {"error": str(e), "data": data}
+            return format_error_dict(str(e), data=data)
 
 
 async def ynab_delete(url: str) -> dict[str, Any] | None:
@@ -81,4 +82,18 @@ async def ynab_delete(url: str) -> dict[str, Any] | None:
             response_json = response.json()
             return response_json
         except Exception as e:
-            return None
+            return format_error_dict(str(e))
+
+
+def format_error_dict(message: str, response=None, data=None) -> dict[str, Any]:
+    """Handle API errors by returning a formatted error message."""
+    if response:
+        return {"error": message, "response": response}
+    if data:
+        return {"error": message, "data": data}
+    return {"error": message}
+
+
+def format_error(message: str, response=None, data=None) -> str:
+    """Handle API errors by returning a formatted error message."""
+    return json.dumps(format_error_dict(message, response, data))

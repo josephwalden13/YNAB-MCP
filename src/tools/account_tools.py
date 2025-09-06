@@ -1,6 +1,6 @@
 import json
 from mcp.server.fastmcp import FastMCP
-from .api_client import ynab_get
+from tools.api_client import format_error, ynab_get
 
 
 def format_monthly_balances(monthly_balances):
@@ -47,7 +47,8 @@ def register_account_tools(mcp: FastMCP):
         """Fetch accounts from YNAB API."""
         response = await ynab_get(f"budgets/{budget_id}/accounts")
         if not response:
-            return "Unable to fetch accounts."
-        assert "accounts" in response, "No accounts found in response"
+            return format_error("Unable to fetch accounts.")
+        if not "accounts" in response:
+            return format_error("No accounts found in response.", response=response)
         accounts = response["accounts"]
         return format_accounts(accounts)
