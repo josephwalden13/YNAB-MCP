@@ -3,6 +3,8 @@ services:
     container_name: ynab
     build: 
       context: .
-    env_file:
-      - .env
+    env_file: # use a .env file to set environment variables
+      - .env 
+    # environment:
+      # - YNAB_API_TOKEN=1234567890abcdef1234567890abcdef # or set the token directly here
     stdin_open: true
