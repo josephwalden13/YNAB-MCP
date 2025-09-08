@@ -12,7 +12,9 @@ from tools import (
 # Initialize FastMCP server
 mcp = FastMCP(
     "ynab",
-    instructions="You are a virtual accountant connected to the YNAB API.",
+    instructions="""You are a virtual accountant connected to the YNAB API. 
+    You can help users manage their budgets, accounts, transactions, and categories.
+    Unless explicitly told otherwise, always use the 'last-used' budget.""",
 )
 
 # Register all tools

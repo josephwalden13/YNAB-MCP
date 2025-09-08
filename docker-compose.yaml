@@ -8,3 +8,4 @@ services:
     # environment:
       # - YNAB_API_TOKEN=1234567890abcdef1234567890abcdef # or set the token directly here
     stdin_open: true
+    restart: unless-stopped

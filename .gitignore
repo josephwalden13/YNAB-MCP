@@ -2,3 +2,4 @@ clean
 open_api_spec.yaml
 .env
 **/__pycache__/
+.claude/settings.local.json
