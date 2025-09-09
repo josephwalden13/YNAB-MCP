@@ -94,10 +94,6 @@ def format_error_dict(message: str, response=None, data=None) -> dict[str, Any]:
     return {"error": message}
 
 
-def format_error(message: str, response=None, data=None) -> str:
-    """Handle API errors by returning a formatted error message."""
-    return json.dumps(format_error_dict(message, response, data))
-
 
 class PostError(Exception):
     pass
@@ -108,4 +104,8 @@ class GetError(Exception):
 
 
 class PutError(Exception):
+    pass
+
+
+class DeleteError(Exception):
     pass

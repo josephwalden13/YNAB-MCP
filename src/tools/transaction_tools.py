@@ -7,11 +7,11 @@ from tools.api_client import (
     GetError,
     PostError,
     PutError,
+    DeleteError,
     ynab_get,
     ynab_post,
     ynab_put,
     ynab_delete,
-    format_error,
 )
 
 
@@ -27,8 +27,12 @@ class Transaction:
 
     def __init__(self, json: dict[str, Any]):
         self.id = json.get("id")
-        self.date = datetime.date.fromisoformat(json["date"]) if json.get("date") else None
-        self.amount = json["amount"] / 1000 if json.get("amount") else None  # convert from milliunits to units
+        self.date = (
+            datetime.date.fromisoformat(json["date"]) if json.get("date") else None
+        )
+        self.amount = (
+            json["amount"] / 1000 if json.get("amount") else None
+        )  # convert from milliunits to units
         self.cleared = json.get("cleared")
         self.approved = json.get("approved")
         self.account_id = json.get("account_id")
@@ -111,6 +115,17 @@ async def _update_transaction(
     if not "transaction" in response:
         raise PutError("No transaction found in response data.")
     return Transaction(response["transaction"])
+
+
+async def _delete_transaction(
+    transaction_id: str, budget_id: str = "last-used"
+) -> dict[str, Any]:
+    response = await ynab_delete(f"/budgets/{budget_id}/transactions/{transaction_id}")
+    if not response:
+        raise DeleteError(
+            {"error": "Unable to delete transaction.", "response": response}
+        )
+    return response
 
 
 def register_transaction_tools(mcp: FastMCP):
@@ -198,15 +213,16 @@ def register_transaction_tools(mcp: FastMCP):
 
         return json.dumps(updated_transaction.toJson())
 
-    # TODO: refactor
     @mcp.tool()
-    async def delete_transaction(budget_id: str, transaction_id: str) -> str:
-        """Delete a transaction in YNAB API."""
-        response = await ynab_delete(
-            f"budgets/{budget_id}/transactions/{transaction_id}"
-        )
-        if not response:
-            return format_error("Unable to delete transaction.")
+    async def delete_transaction(
+        transaction_id: str, budget_id: str = "last-used"
+    ) -> str:
+        """Delete a transaction in YNAB API.
+        Args:
+            budget_id (str): The ID of the budget.
+            transaction_id (str): The ID of the transaction to delete.
+        """
+        response = await _delete_transaction(transaction_id, budget_id)
         return json.dumps(response)
 
     @mcp.tool()
