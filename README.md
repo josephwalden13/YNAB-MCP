@@ -19,6 +19,48 @@
 
 YNAB MCP is a Model Context Protocol (MCP) server that provides AI assistants access to the YNAB API. 
 
+## Installation
+
+These instructions are for the Anthropic Claud Desktop application. This should work with other MCP clients too.
+
+### 1. Open the MCP config
+
+#### Windows
+
+```bash
+code $env:AppData\Claude\claude_desktop_config.json
+```
+
+#### Linux / MacOS
+
+```bash
+code ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
+
+### 2. Add entry for YNAB
+
+Substitute &lt;my token&gt; for your YNAB Personal Access Token
+
+```json
+{
+  "mcpServers": {
+    "ynab": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "YNAB_API_TOKEN=<my token>",
+        "ghcr.io/josephwalden13/ynab-mcp"
+      ]
+    }
+  }
+}
+```
+
+#### 3. Restart Claud
+
 ## Screenshots
 
 ![Create Transaction](images/transaction.png)
@@ -51,12 +93,11 @@ YNAB MCP is a Model Context Protocol (MCP) server that provides AI assistants ac
 
 - Read
 
-## Installation Instructions
+## Build Instructions
 
 ### Prerequisites
 
-- Python 3.13
-    - Tested on 3.13 but will probably work on previous versions
+- Docker
 - YNAB Personal Access Token
 
 ### Setup
@@ -78,39 +119,5 @@ cd YNAB-MCP
 #### 3. Build
 
 ```bash
-docker compose up -d
-```
-
-### Claud Setup
-
-These instructions are for the Anthropic Claud Desktop application. This should work with other MCP clients too.
-
-#### 1. Open the MCP config
-
-##### Windows
-
-```bash
-code $env:AppData\Claude\claude_desktop_config.json
-```
-
-##### Linux / MacOS
-
-```bash
-code ~/Library/Application\ Support/Claude/claude_desktop_config.json
-```
-
-#### 2. Add entry for YNAB
-
-```json
-{
-  "mcpServers": {
-    "ynab": {
-      "command": "docker",
-      "args": [
-        "attach",
-        "ynab"
-      ]
-    }
-  }
-}
+docker compose up
 ```

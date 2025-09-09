@@ -1,6 +1,7 @@
 services:
   mcp:
     container_name: ynab
+    image: ghcr.io/josephwalden13/ynab-mcp:latest
     build: 
       context: .
     env_file: # use a .env file to set environment variables
