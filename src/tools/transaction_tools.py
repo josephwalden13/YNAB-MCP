@@ -24,6 +24,7 @@ class Transaction:
     cleared: str | None
     category_id: str | None
     payee_name: str | None
+    memo: str | None
 
     def __init__(self, json: dict[str, Any]):
         self.id = json.get("id")
@@ -38,6 +39,7 @@ class Transaction:
         self.account_id = json.get("account_id")
         self.category_id = json.get("category_id")
         self.payee_name = json.get("payee_name")
+        self.memo = json.get("memo")
         # TODO: subtransactions
 
     def toJson(self) -> dict[str, Any]:
@@ -50,6 +52,7 @@ class Transaction:
             "account_id": self.account_id,
             "payee_name": self.payee_name,
             "category_id": self.category_id,
+            "memo": self.memo,
         }
         return {x: json[x] for x in json if json[x] is not None}
 
