@@ -23,7 +23,7 @@ class Month(BaseModel):
     ) -> list[Month] | YNABClient.Error:
         response = await ynab.Send(
             method="GET",
-            path=f"/budgets/{budget.__getattribute__('id') or 'last-used'}/months",
+            path=f"/budgets/{budget.id if budget else 'last-used'}/months",
         )
         if isinstance(response, YNABClient.Error):
             return response
