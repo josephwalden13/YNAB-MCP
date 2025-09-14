@@ -1,31 +1,37 @@
+from Account import Account
+from AppContext import AppContext
+from Budget import Budget
+from Category import Category
+from contextlib import asynccontextmanager
 from mcp.server.fastmcp import FastMCP
-from tools import (
-    register_user_tools,
-    register_budget_tools,
-    register_account_tools,
-    register_payee_tools,
-    register_month_tools,
-    register_category_tools,
-    register_transaction_tools,
-)
+from Month import Month
+from Payee import Payee
+from Transaction import Transaction
+from YNABClient import YNABClient
+
+
+@asynccontextmanager
+async def app_lifespan(server: FastMCP):
+    ynab = YNABClient()
+    try:
+        yield AppContext(ynab=ynab)
+    finally:
+        pass
+
 
 # Initialize FastMCP server
 mcp = FastMCP(
     "ynab",
-    instructions="""You are a virtual accountant connected to the YNAB API. 
-    You can help users manage their budgets, accounts, transactions, and categories.
-    Unless explicitly told otherwise, always use the 'last-used' budget.""",
+    lifespan=app_lifespan,
 )
 
 # Register all tools
-register_user_tools(mcp)
-register_budget_tools(mcp)
-register_account_tools(mcp)
-register_payee_tools(mcp)
-register_month_tools(mcp)
-register_category_tools(mcp)
-register_transaction_tools(mcp)
-
+Transaction.RegisterTools(mcp)
+Budget.RegisterTools(mcp)
+Category.RegisterTools(mcp)
+Month.RegisterTools(mcp)
+Account.RegisterTools(mcp)
+Payee.RegisterTools(mcp)
 
 if __name__ == "__main__":
     # Initialize and run the server
