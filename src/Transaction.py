@@ -66,7 +66,7 @@ class Transaction(BaseModel):
         url: str
         if transaction:
             url = f"/budgets/{budget_id}/transactions/{transaction.id}"
-        if category:
+        elif category:
             url = f"/budgets/{budget_id}/categories/{category.id}/transactions"
         elif account:
             url = f"/budgets/{budget_id}/accounts/{account.id}/transactions"
