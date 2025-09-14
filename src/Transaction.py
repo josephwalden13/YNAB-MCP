@@ -171,6 +171,7 @@ class Transaction(BaseModel):
             client = ctx.request_context.lifespan_context.ynab
             return await updated_transaction.Update(ynab=client, budget_id=budget_id)
 
+        @mcp.tool()
         async def delete_transaction(
             ctx: Context[ServerSession, AppContext],
             transaction: Transaction,
